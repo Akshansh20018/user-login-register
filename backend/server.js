@@ -53,29 +53,6 @@ app.post('/submit', (req, res) => {
 });
 
 // Route to handle registration
-// app.post('/register', (req, res) => {
-//   console.log('Registration attempt:', req.body);
-//   const { username, password } = req.body;
-  
-//   // Check if user already exists
-//   const existingUser = users.find(user => user.username === username);
-//   if (existingUser) {
-//     res.send('Username already exists! Please choose a different username.');
-//     return;
-//   }
-  
-//   // Add new user to CSV file
-//   const newUser = { username, password };
-//   users.push(newUser);
-  
-//   // Write updated users back to CSV file
-//   const csvContent = 'username,password\n' + users.map(user => `${user.username},${user.password}`).join('\n');
-//   fs.writeFileSync(path.join(__dirname, 'users.csv'), csvContent);
-  
-//   res.send('Registration successful! You can now login.');
-// });
-
-// Route to handle registration
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'register.html'));
 });
@@ -83,14 +60,7 @@ app.get('/register', (req, res) => {
 app.post('/addUser', (req, res) => {
   console.log('Registration attempt:', req.body);
   const { username, password } = req.body;
-  
-  // Check if user already exists
-  const existingUser = users.find(user => user.username === username);
-  if (existingUser) {
-    res.send('Username already exists! Please choose a different username.');
-    return;
-  }
-  
+    
   // Add new user to CSV file
   const newUser = { username, password };
   users.push(newUser);
