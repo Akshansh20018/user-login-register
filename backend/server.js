@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const PORT = process.env.PORT || 3000;
 
 // Middleware to parse form data
@@ -41,12 +42,24 @@ app.get('/', (req, res) => {
 });
 
 // Route to handle form submission
-app.post('/submit', (req, res) => {
-  console.log('Received:', req.body);
+app.post('/submit', async (req, res) => {
   const { username, password } = req.body;
-  const user = users.find(user => user.username === username && user.password === password);
+  console.log('Received:', username);
+  
+  const user = users.find(user => user.username === username);
   if (user) {
-    res.send('Login successful!');
+    try {
+      // Compare password with hashed password using bcrypt
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (isPasswordValid) {
+        res.send('Login successful!');
+      } else {
+        res.send('Login failed!');
+      }
+    } catch (error) {
+      console.error('Password verification error:', error);
+      res.send('Login failed!');
+    }
   } else {
     res.send('Login failed!');
   }
@@ -57,19 +70,28 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'register.html'));
 });
 
-app.post('/addUser', (req, res) => {
-  console.log('Registration attempt:', req.body);
+app.post('/addUser', async (req, res) => {
   const { username, password } = req.body;
+  console.log('Registration attempt:', username);
+  
+  try {
+    // Hash the password with salt rounds of 10
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     
-  // Add new user to CSV file
-  const newUser = { username, password };
-  users.push(newUser);
-  
-  // Write updated users back to CSV file
-  const csvContent = 'username,password\n' + users.map(user => `${user.username},${user.password}`).join('\n');
-  fs.writeFileSync(path.join(__dirname, 'users.csv'), csvContent);
-  
-  res.send('Registration successful! You can now login.');
+    // Add new user to CSV file with hashed password
+    const newUser = { username, password: hashedPassword };
+    users.push(newUser);
+    
+    // Write updated users back to CSV file
+    const csvContent = 'username,password\n' + users.map(user => `${user.username},${user.password}`).join('\n');
+    fs.writeFileSync(path.join(__dirname, 'users.csv'), csvContent);
+    
+    res.send('Registration successful! You can now login.');
+  } catch (error) {
+    console.error('Password hashing error:', error);
+    res.send('Registration failed!');
+  }
 });
 
 app.get('/checkUsername', (req, res) => {
